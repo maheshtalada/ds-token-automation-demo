@@ -1,28 +1,52 @@
 ## TODO
 
+# on:
+#   workflow_dispatch:
+#   push:
+#     paths: ["src/components/**", "src/stories/**", "src/css/**"]
+#     branches: main
+# name: Upload Website
+
 on:
-  workflow_dispatch:
-  push:
-    paths: ["src/components/**", "src/stories/**", "src/css/**"]
-    branches: main
+    workflow_dispatch:
+    push:
+        branches:
+            - master
+
 jobs:
-  build_storybook:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3.3.0
-      - name: Install, Build
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16
-      - run: npm install
-      - run: npm run build-storybook
-      - uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: build storybook
-      - name: Deploy
-        uses: JamesIves/github-pages-deploy-action@v4.4.1
-        with:
-           branch: gh-pages
-           folder: docs
-           target-folder: docs
+    deploy:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v1
+
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
+            - name: Deploy static site to S3 bucket
+              run: aws s3 sync ./src/ s3://ds-token-workflow-demo --delete
+# jobs:
+#   build_storybook:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v3.3.0
+#       - name: Install, Build
+#         uses: actions/setup-node@v3
+#         with:
+#           node-version: 16
+#       - run: npm install
+#       - run: npm run build-storybook
+#       - uses: stefanzweifel/git-auto-commit-action@v4
+#         with:
+#           commit_message: build storybook
+#       - name: Deploy
+#         uses: JamesIves/github-pages-deploy-action@v4.4.1
+#         with:
+#            branch: gh-pages
+#            folder: docs
+#            target-folder: docs
